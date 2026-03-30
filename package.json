@@ -1,8 +1,8 @@
 {
 	"name": "wp-pin-query-block",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "A WordPress block for pinning posts and events into a featured content section.",
-	"author": "",
+	"author": "Heikki Wilenius",
 	"license": "GPL-2.0-or-later",
 	"main": "build/index.js",
 	"scripts": {

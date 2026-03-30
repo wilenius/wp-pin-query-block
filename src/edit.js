@@ -8,61 +8,131 @@ import {
 	Spinner,
 	Icon,
 } from '@wordpress/components';
-import { useState, useCallback, useEffect, useRef } from '@wordpress/element';
+import { useState, useCallback, useEffect, useRef, useMemo } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { store as coreStore } from '@wordpress/core-data';
 import apiFetch from '@wordpress/api-fetch';
 import { useDebouncedValue } from './use-debounced-value';
 import './editor.scss';
 
-function PinnedItem( { item, index, total, onRemove, onMoveUp, onMoveDown, onDragStart, onDragOver, onDrop } ) {
+function SortablePinnedList( { items, onReorder, onRemove, onMoveUp, onMoveDown } ) {
+	const [ dragIndex, setDragIndex ] = useState( null );
+	const [ dropIndex, setDropIndex ] = useState( null );
+	const listRef = useRef( null );
+	const dragStartY = useRef( 0 );
+
+	const handlePointerDown = ( e, index ) => {
+		// Only start drag from the handle.
+		if ( ! e.target.closest( '.wp-pin-query-pinned-item__drag-handle' ) ) {
+			return;
+		}
+		e.preventDefault();
+		e.stopPropagation();
+		setDragIndex( index );
+		setDropIndex( index );
+		dragStartY.current = e.clientY;
+		e.target.setPointerCapture( e.pointerId );
+	};
+
+	const handlePointerMove = ( e ) => {
+		if ( dragIndex === null || ! listRef.current ) {
+			return;
+		}
+		e.preventDefault();
+		e.stopPropagation();
+
+		// Determine which item we're hovering over based on element positions.
+		const children = Array.from( listRef.current.children );
+		for ( let i = 0; i < children.length; i++ ) {
+			const rect = children[ i ].getBoundingClientRect();
+			const midY = rect.top + rect.height / 2;
+			if ( e.clientY < midY ) {
+				setDropIndex( i );
+				return;
+			}
+		}
+		setDropIndex( children.length - 1 );
+	};
+
+	const handlePointerUp = ( e ) => {
+		if ( dragIndex === null ) {
+			return;
+		}
+		e.stopPropagation();
+		if ( dropIndex !== null && dragIndex !== dropIndex ) {
+			onReorder( dragIndex, dropIndex );
+		}
+		setDragIndex( null );
+		setDropIndex( null );
+	};
+
 	return (
 		<div
-			className="wp-pin-query-pinned-item"
-			draggable
-			onDragStart={ ( e ) => onDragStart( e, index ) }
-			onDragOver={ ( e ) => onDragOver( e, index ) }
-			onDrop={ ( e ) => onDrop( e, index ) }
+			ref={ listRef }
+			className="wp-pin-query-pinned-list"
+			onPointerMove={ handlePointerMove }
+			onPointerUp={ handlePointerUp }
 		>
-			<span className="wp-pin-query-pinned-item__drag-handle" title={ __( 'Drag to reorder', 'wp-pin-query-block' ) }>
-				⠿
-			</span>
-			{ item.thumbnail && (
-				<img
-					className="wp-pin-query-pinned-item__thumbnail"
-					src={ item.thumbnail }
-					alt=""
-				/>
-			) }
-			<span className="wp-pin-query-pinned-item__title">
-				{ item.title }
-			</span>
-			<span className="wp-pin-query-pinned-item__type">
-				{ item.typeLabel }
-			</span>
-			<div className="wp-pin-query-pinned-item__actions">
-				<Button
-					icon="arrow-up-alt2"
-					label={ __( 'Move up', 'wp-pin-query-block' ) }
-					onClick={ () => onMoveUp( index ) }
-					disabled={ index === 0 }
-					size="small"
-				/>
-				<Button
-					icon="arrow-down-alt2"
-					label={ __( 'Move down', 'wp-pin-query-block' ) }
-					onClick={ () => onMoveDown( index ) }
-					disabled={ index === total - 1 }
-					size="small"
-				/>
-				<Button
-					icon="no-alt"
-					label={ __( 'Remove', 'wp-pin-query-block' ) }
-					onClick={ () => onRemove( index ) }
-					isDestructive
-					size="small"
-				/>
-			</div>
+			{ items.map( ( item, index ) => {
+				let className = 'wp-pin-query-pinned-item';
+				if ( dragIndex !== null && index === dragIndex ) {
+					className += ' is-dragging';
+				}
+				if ( dragIndex !== null && index === dropIndex && index !== dragIndex ) {
+					className += dragIndex > dropIndex ? ' is-drop-above' : ' is-drop-below';
+				}
+
+				return (
+					<div
+						key={ item.id }
+						className={ className }
+						onPointerDown={ ( e ) => handlePointerDown( e, index ) }
+					>
+						<span
+							className="wp-pin-query-pinned-item__drag-handle"
+							title={ __( 'Drag to reorder', 'wp-pin-query-block' ) }
+						>
+							⠿
+						</span>
+						{ item.thumbnail && (
+							<img
+								className="wp-pin-query-pinned-item__thumbnail"
+								src={ item.thumbnail }
+								alt=""
+							/>
+						) }
+						<span className="wp-pin-query-pinned-item__title">
+							{ item.title }
+						</span>
+						<span className="wp-pin-query-pinned-item__type">
+							{ item.typeLabel }
+						</span>
+						<div className="wp-pin-query-pinned-item__actions">
+							<Button
+								icon="arrow-up-alt2"
+								label={ __( 'Move up', 'wp-pin-query-block' ) }
+								onClick={ () => onMoveUp( index ) }
+								disabled={ index === 0 }
+								size="small"
+							/>
+							<Button
+								icon="arrow-down-alt2"
+								label={ __( 'Move down', 'wp-pin-query-block' ) }
+								onClick={ () => onMoveDown( index ) }
+								disabled={ items.length - 1 === index }
+								size="small"
+							/>
+							<Button
+								icon="no-alt"
+								label={ __( 'Remove', 'wp-pin-query-block' ) }
+								onClick={ () => onRemove( index ) }
+								isDestructive
+								size="small"
+							/>
+						</div>
+					</div>
+				);
+			} ) }
 		</div>
 	);
 }
@@ -72,7 +142,6 @@ export default function Edit( { attributes, setAttributes } ) {
 	const [ searchQuery, setSearchQuery ] = useState( '' );
 	const [ searchResults, setSearchResults ] = useState( [] );
 	const [ isSearching, setIsSearching ] = useState( false );
-	const [ dragIndex, setDragIndex ] = useState( null );
 	const debouncedSearch = useDebouncedValue( searchQuery, 300 );
 
 	// Resolve pinned posts to get their current titles and thumbnails.
@@ -159,25 +228,6 @@ export default function Edit( { attributes, setAttributes } ) {
 		[ pinnedPosts, setAttributes ]
 	);
 
-	// Drag and drop handlers.
-	const handleDragStart = ( e, index ) => {
-		setDragIndex( index );
-		e.dataTransfer.effectAllowed = 'move';
-	};
-
-	const handleDragOver = ( e ) => {
-		e.preventDefault();
-		e.dataTransfer.dropEffect = 'move';
-	};
-
-	const handleDrop = ( e, targetIndex ) => {
-		e.preventDefault();
-		if ( dragIndex !== null && dragIndex !== targetIndex ) {
-			movePin( dragIndex, targetIndex );
-		}
-		setDragIndex( null );
-	};
-
 	const blockProps = useBlockProps();
 
 	return (
@@ -244,20 +294,13 @@ export default function Edit( { attributes, setAttributes } ) {
 				{ resolvedPinned.length > 0 && (
 					<div className="wp-pin-query-editor__pinned">
 						<h4>{ __( 'Pinned Items', 'wp-pin-query-block' ) }</h4>
-						{ resolvedPinned.map( ( item, index ) => (
-							<PinnedItem
-								key={ item.id }
-								item={ item }
-								index={ index }
-								total={ resolvedPinned.length }
-								onRemove={ removePin }
-								onMoveUp={ ( i ) => movePin( i, i - 1 ) }
-								onMoveDown={ ( i ) => movePin( i, i + 1 ) }
-								onDragStart={ handleDragStart }
-								onDragOver={ handleDragOver }
-								onDrop={ handleDrop }
-							/>
-						) ) }
+						<SortablePinnedList
+							items={ resolvedPinned }
+							onReorder={ movePin }
+							onRemove={ removePin }
+							onMoveUp={ ( i ) => movePin( i, i - 1 ) }
+							onMoveDown={ ( i ) => movePin( i, i + 1 ) }
+						/>
 					</div>
 				) }
 

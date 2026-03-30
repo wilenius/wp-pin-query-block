@@ -77,6 +77,11 @@
 	}
 }
 
+.wp-pin-query-pinned-list {
+	touch-action: none;
+	user-select: none;
+}
+
 .wp-pin-query-pinned-item {
 	display: flex;
 	align-items: center;
@@ -86,10 +91,20 @@
 	border: 1px solid #ddd;
 	border-radius: 3px;
 	margin-bottom: 4px;
-	cursor: grab;
+	transition: border-color 0.15s ease;
 
-	&:active {
-		cursor: grabbing;
+	&.is-dragging {
+		opacity: 0.4;
+	}
+
+	&.is-drop-above {
+		border-top: 2px solid var(--wp-admin-theme-color, #007cba);
+		padding-top: calc(0.4rem - 1px);
+	}
+
+	&.is-drop-below {
+		border-bottom: 2px solid var(--wp-admin-theme-color, #007cba);
+		padding-bottom: calc(0.4rem - 1px);
 	}
 
 	&__drag-handle {
@@ -98,6 +113,11 @@
 		flex-shrink: 0;
 		font-size: 1.2rem;
 		line-height: 1;
+		padding: 4px;
+
+		&:active {
+			cursor: grabbing;
+		}
 	}
 
 	&__thumbnail {
