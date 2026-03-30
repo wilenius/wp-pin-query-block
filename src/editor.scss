@@ -1,0 +1,138 @@
+.wp-pin-query-editor {
+	padding: 1rem;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	background: #f9f9f9;
+
+	&__search {
+		margin-bottom: 1rem;
+		position: relative;
+
+		.components-spinner {
+			position: absolute;
+			top: 0;
+			right: 0;
+		}
+	}
+
+	&__results {
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		background: #fff;
+		max-height: 300px;
+		overflow-y: auto;
+	}
+
+	&__result-item {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem;
+		border-bottom: 1px solid #eee;
+
+		&:last-child {
+			border-bottom: none;
+		}
+	}
+
+	&__result-thumb {
+		width: 40px;
+		height: 40px;
+		object-fit: cover;
+		border-radius: 2px;
+		flex-shrink: 0;
+	}
+
+	&__result-title {
+		flex: 1;
+		font-weight: 500;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__result-type {
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		color: #888;
+		flex-shrink: 0;
+	}
+
+	&__pinned {
+		h4 {
+			margin: 0 0 0.5rem;
+			font-size: 0.85rem;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			color: #555;
+		}
+	}
+
+	&__placeholder {
+		color: #888;
+		text-align: center;
+		padding: 2rem 1rem;
+		margin: 0;
+	}
+}
+
+.wp-pin-query-pinned-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.4rem 0.5rem;
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	margin-bottom: 4px;
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
+
+	&__drag-handle {
+		color: #999;
+		cursor: grab;
+		flex-shrink: 0;
+		font-size: 1.2rem;
+		line-height: 1;
+	}
+
+	&__thumbnail {
+		width: 32px;
+		height: 32px;
+		object-fit: cover;
+		border-radius: 2px;
+		flex-shrink: 0;
+	}
+
+	&__title {
+		flex: 1;
+		font-size: 0.9rem;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__type {
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		color: #888;
+		flex-shrink: 0;
+	}
+
+	&__actions {
+		display: flex;
+		gap: 2px;
+		flex-shrink: 0;
+
+		.components-button {
+			min-width: 24px;
+			height: 24px;
+			padding: 0;
+		}
+	}
+}

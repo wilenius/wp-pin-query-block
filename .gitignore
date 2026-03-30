@@ -1,0 +1,19 @@
+node_modules/
+build/
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# WordPress
+*.log
